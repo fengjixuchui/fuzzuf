@@ -1,6 +1,6 @@
 /*
  * fuzzuf
- * Copyright (C) 2022 Ricerca Security
+ * Copyright (C) 2021-2023 Ricerca Security
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -172,7 +172,7 @@ std::unique_ptr<TFuzzer> BuildDIEFuzzerFromArgs(
       global_options.exec_timelimit_ms.value_or(GetExecTimeout<DIETag>()),
       global_options.exec_memlimit.value_or(GetMemLimit<DIETag>()),
       /* forksrv */ true,
-      /* dumb_mode */ false, fuzzuf::utils::CPUID_BIND_WHICHEVER,
+      /* dumb_mode */ false, global_options.cpuid_to_bind,
       die_options.die_dir,  // vvv DIE vvv
       die_options.cmd_py, die_options.cmd_node, die_options.d8_path,
       die_options.d8_flags, die_options.typer_path, die_options.mut_cnt);

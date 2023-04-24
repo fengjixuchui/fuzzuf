@@ -1,6 +1,6 @@
 /*
  * fuzzuf
- * Copyright (C) 2022 Ricerca Security
+ * Copyright (C) 2021-2023 Ricerca Security
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -44,15 +44,6 @@ AbandonEntryTemplate<AFLplusplusState>::operator()(
 template <>
 utils::NullableRef<hierarflow::HierarFlowCallee<void(void)>>
 SelectSeedTemplate<AFLplusplusState>::operator()(void);
-
-void CreateAliasTable(AFLplusplusState& state);
-
-void ComputeWeightVector(AFLplusplusState& state, std::vector<double>& vw);
-
-double ComputeWeight(const AFLplusplusState& state,
-                     const AFLplusplusTestcase& testcase,
-                     const double& avg_exec_us, const double& avg_bitmap_size,
-                     const double& avg_top_size);
 
 }  // namespace fuzzuf::algorithm::afl::routine::other
 #endif

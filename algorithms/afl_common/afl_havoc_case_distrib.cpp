@@ -1,6 +1,6 @@
 /*
  * fuzzuf
- * Copyright (C) 2022 Ricerca Security
+ * Copyright (C) 2021-2023 Ricerca Security
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -61,7 +61,7 @@ u32 AFLHavocCaseDistrib::CalcValue() {
   // starts.
 
   using afl::util::AFLGetCaseWeights;
-  constexpr std::array<double, fuzzuf::mutator::NUM_CASE> weight_set[2][2] = {
+  constexpr std::array<double, mutator::NUM_CASE> weight_set[2][2] = {
       {AFLGetCaseWeights(false, false), AFLGetCaseWeights(false, true)},
       {AFLGetCaseWeights(true, false), AFLGetCaseWeights(true, true)}};
 
@@ -80,8 +80,7 @@ u32 AFLHavocCaseDistrib::CalcValue() {
 
   bool has_extras = !extras.empty();
   bool has_aextras = !a_extras.empty();
-  return static_cast<fuzzuf::mutator::HavocCase>(
-      dists[has_extras][has_aextras]());
+  return static_cast<mutator::HavocCase>(dists[has_extras][has_aextras]());
 }
 
 }  // namespace fuzzuf::algorithm::afl

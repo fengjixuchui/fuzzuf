@@ -1,6 +1,6 @@
 /*
  * fuzzuf
- * Copyright (C) 2021 Ricerca Security
+ * Copyright (C) 2021-2023 Ricerca Security
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -46,16 +46,16 @@ template <class Testcase>
 AFLStateTemplate<Testcase>::AFLStateTemplate(
     std::shared_ptr<const AFLSetting> setting,
     std::shared_ptr<executor::AFLExecutorInterface> executor,
-    std::shared_ptr<optimizer::Optimizer<u32>> _mutop_optimizer)
+    std::unique_ptr<optimizer::HavocOptimizer>&& _havoc_optimizer)
     : setting(setting),
       executor(executor),
       input_set(),
-      rand_fd(fuzzuf::utils::OpenFile("/dev/urandom", O_RDONLY | O_CLOEXEC)),
+      rand_fd(utils::OpenFile("/dev/urandom", O_RDONLY | O_CLOEXEC)),
       // This is a temporary implementation. Change the implementation properly
       // if the value need to be specified from user side.
-      cpu_core_count(fuzzuf::utils::GetCpuCore()),
-      cpu_aff(fuzzuf::utils::BindCpu(cpu_core_count, setting->cpuid_to_bind)),
-      mutop_optimizer(_mutop_optimizer),
+      cpu_core_count(utils::GetCpuCore()),
+      cpu_aff(utils::BindCpu(cpu_core_count, setting->cpuid_to_bind)),
+      havoc_optimizer(std::move(_havoc_optimizer)),
       should_construct_auto_dict(false) {
   if (in_bitmap.empty())
     virgin_bits.assign(option::GetMapSize<Tag>(), 255);
@@ -70,9 +70,9 @@ AFLStateTemplate<Testcase>::AFLStateTemplate(
   if (!plot_file) ERROR("Unable to create '%s'", plot_fn.c_str());
 
   fprintf(plot_file,
-          "# unix_time, cycles_done, cur_path, paths_total, "
+          "# relative_time, cycles_done, cur_path, paths_total, "
           "pending_total, pending_favs, map_size, unique_crashes, "
-          "unique_hangs, max_depth, execs_per_sec\n");
+          "unique_hangs, max_depth, execs_per_sec, total_execs, edges_found\n");
 }
 
 template <class Testcase>
@@ -172,11 +172,6 @@ AFLStateTemplate<Testcase>::CalibrateCaseWithFeedDestroyed(
 
     if (stop_soon || exit_status.exit_reason != crash_mode)
       goto abort_calibration;  // FIXME: goto
-
-    if (!setting->dumb_mode && !stage_cur && !inp_feed.CountNonZeroBytes()) {
-      exit_status.exit_reason = feedback::PUTExitReasonType::FAULT_NOINST;
-      goto abort_calibration;  // FIXME: goto
-    }
 
     u32 cksum = inp_feed.CalcCksum32();
 
@@ -945,7 +940,7 @@ void AFLStateTemplate<Testcase>::ReadBitmap(fs::path fname) {
 
 template <class Testcase>
 void AFLStateTemplate<Testcase>::MaybeUpdatePlotFile(double bitmap_cvg,
-                                                     double eps) {
+                                                     double eps, u64 edges_found) {
   if (prev_qp == queued_paths && prev_pf == pending_favored &&
       prev_pnf == pending_not_fuzzed && prev_ce == current_entry &&
       prev_qc == queue_cycle && prev_uc == unique_crashes &&
@@ -963,15 +958,15 @@ void AFLStateTemplate<Testcase>::MaybeUpdatePlotFile(double bitmap_cvg,
 
   /* Fields in the file:
 
-     unix_time, cycles_done, cur_path, paths_total, paths_not_fuzzed,
+     relative_time, cycles_done, cur_path, paths_total, paths_not_fuzzed,
      favored_not_fuzzed, unique_crashes, unique_hangs, max_depth,
-     execs_per_sec */
+     execs_per_sec, total_execs, edges_found */
 
   fprintf(plot_file,
-          "%llu, %llu, %u, %u, %u, %u, %0.02f%%, %llu, %llu, %u, %0.02f\n",
-          fuzzuf::utils::GetCurTimeMs() / 1000, queue_cycle - 1, current_entry,
+          "%llu, %llu, %u, %u, %u, %u, %0.02f%%, %llu, %llu, %u, %0.02f, %llu, %llu\n",
+          (utils::GetCurTimeMs() - start_time) / 1000, queue_cycle - 1, current_entry,
           queued_paths, pending_not_fuzzed, pending_favored, bitmap_cvg,
-          unique_crashes, unique_hangs, max_depth, eps); /* ignore errors */
+          unique_crashes, unique_hangs, max_depth, eps, total_execs, edges_found); /* ignore errors */
 
   fflush(plot_file);
 }
@@ -1086,9 +1081,10 @@ void AFLStateTemplate<Testcase>::ReadTestcases(void) {
     }
 
     if (st.st_size > option::GetMaxFile<Tag>()) {
-      EXIT("Test case '%s' is too big (%s, limit is %s)", fn.c_str(),
+      WARNF("Test case '%s' is too big (%s, limit is %s)", fn.c_str(),
            util::DescribeMemorySize(st.st_size).c_str(),
            util::DescribeMemorySize(option::GetMaxFile<Tag>()).c_str());
+      continue;
     }
 
     /* Check for metadata that indicates that deterministic fuzzing
@@ -1495,7 +1491,7 @@ void AFLStateTemplate<Testcase>::ShowStats(void) {
   /* Every now and then, write plot data. */
   if (cur_ms - last_plot_ms > GetPlotUpdateSec(*this) * 1000) {
     last_plot_ms = cur_ms;
-    MaybeUpdatePlotFile(t_byte_ratio, avg_exec);
+    MaybeUpdatePlotFile(t_byte_ratio, avg_exec, t_bytes);
   }
 
   /* Honor AFL_EXIT_WHEN_DONE and AFL_BENCH_UNTIL_CRASH. */

@@ -1,6 +1,6 @@
 /*
  * fuzzuf
- * Copyright (C) 2022 Ricerca Security
+ * Copyright (C) 2021-2023 Ricerca Security
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -28,7 +28,7 @@
 #include "fuzzuf/exec_input/exec_input_set.hpp"
 #include "fuzzuf/executor/ijon_executor_interface.hpp"
 #include "fuzzuf/feedback/inplace_memory_feedback.hpp"
-#include "fuzzuf/optimizer/optimizer.hpp"
+#include "fuzzuf/optimizer/havoc_optimizer.hpp"
 #include "fuzzuf/utils/filesystem.hpp"
 
 namespace fuzzuf::algorithm::ijon {
@@ -44,7 +44,7 @@ struct IJONState : public afl::AFLStateTemplate<IJONTestcase> {
   explicit IJONState(
       std::shared_ptr<const afl::AFLSetting> setting,
       std::shared_ptr<executor::IJONExecutorInterface> executor,
-      std::unique_ptr<optimizer::Optimizer<u32>>&& mutop_optimizer);
+      std::unique_ptr<optimizer::HavocOptimizer>&& havoc_optimizer);
   ~IJONState();
 
   IJONState(const IJONState&) = delete;

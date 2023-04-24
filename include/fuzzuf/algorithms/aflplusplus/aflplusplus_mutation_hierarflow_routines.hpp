@@ -1,6 +1,6 @@
 /*
  * fuzzuf
- * Copyright (C) 2022 Ricerca Security
+ * Copyright (C) 2021-2023 Ricerca Security
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -30,6 +30,11 @@ using AFLplusplusState = aflplusplus::AFLplusplusState;
 // explicit specialization
 template <>
 AFLMutCalleeRef<AFLplusplusState> HavocTemplate<AFLplusplusState>::operator()(
+    AFLMutatorTemplate<AFLplusplusState>& mutator);
+
+template <>
+AFLMutCalleeRef<AFLplusplusState>
+SplicingTemplate<AFLplusplusState>::operator()(
     AFLMutatorTemplate<AFLplusplusState>& mutator);
 
 }  // namespace fuzzuf::algorithm::afl::routine::mutation

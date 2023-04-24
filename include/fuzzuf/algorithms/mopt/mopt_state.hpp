@@ -1,6 +1,6 @@
 /*
  * fuzzuf
- * Copyright (C) 2022 Ricerca Security
+ * Copyright (C) 2021-2023 Ricerca Security
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -32,9 +32,11 @@
 namespace fuzzuf::algorithm::mopt {
 
 struct MOptState : public afl::AFLStateTemplate<MOptTestcase> {
-  explicit MOptState(std::shared_ptr<const mopt::MOptSetting> setting,
-                     std::shared_ptr<executor::AFLExecutorInterface> executor,
-                     std::shared_ptr<optimizer::MOptOptimizer>&& mopt);
+  explicit MOptState(
+      std::shared_ptr<const mopt::MOptSetting> setting,
+      std::shared_ptr<executor::AFLExecutorInterface> executor,
+      std::unique_ptr<optimizer::HavocOptimizer>&& havoc_optimizer,
+      std::shared_ptr<optimizer::MOptOptimizer> mopt);
   ~MOptState();
 
   void UpdateSpliceCycles();

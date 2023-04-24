@@ -1,6 +1,6 @@
 /*
  * fuzzuf
- * Copyright (C) 2022 Ricerca Security
+ * Copyright (C) 2021-2023 Ricerca Security
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -605,7 +605,7 @@ void DIEState::ShowStats(void) {
   /* Every now and then, write plot data. */
   if (cur_ms - last_plot_ms > GetPlotUpdateSec(*this) * 1000) {
     last_plot_ms = cur_ms;
-    MaybeUpdatePlotFile(t_byte_ratio, avg_exec);
+    MaybeUpdatePlotFile(t_byte_ratio, avg_exec, t_bytes);
   }
 
   /* Honor AFL_EXIT_WHEN_DONE and AFL_BENCH_UNTIL_CRASH. */

@@ -1,6 +1,6 @@
 /*
  * fuzzuf
- * Copyright (C) 2021 Ricerca Security
+ * Copyright (C) 2021-2023 Ricerca Security
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -28,9 +28,9 @@ namespace fuzzuf::algorithm::aflfast {
 AFLFastState::AFLFastState(
     std::shared_ptr<const AFLFastSetting> setting,
     std::shared_ptr<executor::AFLExecutorInterface> executor,
-    std::unique_ptr<optimizer::Optimizer<u32>> &&mutop_optimizer)
+    std::unique_ptr<optimizer::HavocOptimizer> &&havoc_optimizer)
     : AFLStateTemplate<AFLFastTestcase>(setting, executor,
-                                        std::move(mutop_optimizer)),
+                                        std::move(havoc_optimizer)),
       setting(setting) {}
 
 std::shared_ptr<AFLFastTestcase> AFLFastState::AddToQueue(const std::string &fn,
@@ -311,7 +311,7 @@ void AFLFastState::ShowStats(void) {
   /* Every now and then, write plot data. */
   if (cur_ms - last_plot_ms > GetPlotUpdateSec(*this) * 1000) {
     last_plot_ms = cur_ms;
-    MaybeUpdatePlotFile(t_byte_ratio, avg_exec);
+    MaybeUpdatePlotFile(t_byte_ratio, avg_exec, t_bytes);
   }
 
   /* Honor AFL_EXIT_WHEN_DONE and AFL_BENCH_UNTIL_CRASH. */

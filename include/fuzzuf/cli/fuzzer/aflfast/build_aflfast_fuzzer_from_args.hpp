@@ -1,6 +1,6 @@
 /*
  * fuzzuf
- * Copyright (C) 2021 Ricerca Security
+ * Copyright (C) 2021-2023 Ricerca Security
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,6 +20,7 @@
 #define FUZZUF_INCLUDE_CLI_FUZZER_AFLFAST_BUILD_AFLFAST_FROM_ARGS_HPP
 
 #include "fuzzuf/algorithms/afl/afl_havoc_case_distrib.hpp"
+#include "fuzzuf/algorithms/afl/afl_havoc_optimizer.hpp"
 #include "fuzzuf/algorithms/aflfast/aflfast_option.hpp"
 #include "fuzzuf/algorithms/aflfast/aflfast_other_hierarflow_routines.hpp"
 #include "fuzzuf/algorithms/aflfast/aflfast_setting.hpp"
@@ -31,6 +32,7 @@
 #include "fuzzuf/exceptions.hpp"
 #include "fuzzuf/executor/native_linux_executor.hpp"
 #include "fuzzuf/executor/qemu_executor.hpp"
+#include "fuzzuf/optimizer/havoc_optimizer.hpp"
 #include "fuzzuf/optimizer/optimizer.hpp"
 #include "fuzzuf/utils/optparser.hpp"
 #include "fuzzuf/utils/parallel_mode.hpp"
@@ -165,7 +167,7 @@ std::unique_ptr<TFuzzer> BuildAFLFastFuzzerFromArgs(
       global_options.exec_timelimit_ms.value_or(GetExecTimeout<AFLFastTag>()),
       mem_limit, aflfast_options.forksrv,
       /* dumb_mode */ false,  // FIXME: add dumb_mode
-      fuzzuf::utils::CPUID_BIND_WHICHEVER, FAST);
+      global_options.cpuid_to_bind, FAST);
 
   // NativeLinuxExecutor needs the directory specified by "out_dir" to be
   // already set up so we need to create the directory first, and then
@@ -216,13 +218,21 @@ std::unique_ptr<TFuzzer> BuildAFLFastFuzzerFromArgs(
       EXIT("Unsupported executor: '%s'", global_options.executor.c_str());
   }
 
-  auto mutop_optimizer = std::unique_ptr<optimizer::Optimizer<u32>>(
-      new algorithm::afl::AFLHavocCaseDistrib());
+  using algorithm::afl::AFLHavocCaseDistrib;
+  using algorithm::afl::AFLHavocOptimizer;
+  using algorithm::afl::option::GetHavocStackPow2;
+  ;
+
+  auto mutop_optimizer =
+      std::unique_ptr<optimizer::Optimizer<u32>>(new AFLHavocCaseDistrib());
+  std::unique_ptr<optimizer::HavocOptimizer> havoc_optimizer(
+      new AFLHavocOptimizer(std::move(mutop_optimizer),
+                            GetHavocStackPow2<AFLFastTag>()));
 
   // Create AFLFastState
   using fuzzuf::algorithm::aflfast::AFLFastState;
   auto state = std::make_unique<AFLFastState>(setting, executor,
-                                              std::move(mutop_optimizer));
+                                              std::move(havoc_optimizer));
 
   // Load dictionary
   for (const auto &d : aflfast_options.dict_file) {

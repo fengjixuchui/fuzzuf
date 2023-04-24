@@ -1,6 +1,6 @@
 /*
  * fuzzuf
- * Copyright (C) 2022 Ricerca Security
+ * Copyright (C) 2021-2023 Ricerca Security
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,6 +17,7 @@
  */
 
 #include "fuzzuf/algorithms/ijon/ijon_state.hpp"
+
 #include "fuzzuf/executor/afl_executor_interface.hpp"
 
 namespace fuzzuf::algorithm::ijon {
@@ -24,17 +25,14 @@ namespace fuzzuf::algorithm::ijon {
 IJONState::IJONState(
     std::shared_ptr<const afl::AFLSetting> setting,
     std::shared_ptr<executor::IJONExecutorInterface> executor,
-    std::unique_ptr<optimizer::Optimizer<u32>>&& mutop_optimizer
-) : 
-    afl::AFLStateTemplate<IJONTestcase>(
-        setting,
-        // std::make_shared<executor::AFLExecutorInterface>(executor->ExposeExecutor()),
-        std::make_shared<executor::AFLExecutorInterface>(executor),
-        std::move(mutop_optimizer)
-    ),
-    ijon_executor(executor)
-{}
+    std::unique_ptr<optimizer::HavocOptimizer>&& havoc_optimizer)
+    : afl::AFLStateTemplate<IJONTestcase>(
+          setting,
+          // std::make_shared<executor::AFLExecutorInterface>(executor->ExposeExecutor()),
+          std::make_shared<executor::AFLExecutorInterface>(executor),
+          std::move(havoc_optimizer)),
+      ijon_executor(executor) {}
 
 IJONState::~IJONState() {}
 
-} // namespace fuzzuf::algorithm::ijon
+}  // namespace fuzzuf::algorithm::ijon

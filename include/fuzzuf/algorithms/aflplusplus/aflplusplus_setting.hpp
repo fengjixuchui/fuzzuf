@@ -1,6 +1,6 @@
 /*
  * fuzzuf
- * Copyright (C) 2022 Ricerca Security
+ * Copyright (C) 2021-2023 Ricerca Security
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -29,7 +29,7 @@ struct AFLplusplusSetting : public afl::AFLSetting {
                               u64 exec_memlimit, bool forksrv, bool dumb_mode,
                               int cpuid_to_bind,
                               const aflfast::option::Schedule schedule,
-                              std::string& schedule_string);
+                              const std::string& schedule_string);
 
   ~AFLplusplusSetting();
 

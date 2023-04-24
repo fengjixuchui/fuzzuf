@@ -1,6 +1,6 @@
 /*
  * fuzzuf
- * Copyright (C) 2022 Ricerca Security
+ * Copyright (C) 2021-2023 Ricerca Security
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,11 +19,14 @@
 
 namespace fuzzuf::algorithm::aflplusplus {
 
-AFLplusplusSetting::AFLplusplusSetting(
-    const std::vector<std::string> &argv, const std::string &in_dir,
-    const std::string &out_dir, u32 exec_timelimit_ms, u64 exec_memlimit,
-    bool forksrv, bool dumb_mode, int cpuid_to_bind,
-    const aflfast::option::Schedule schedule, std::string &schedule_string)
+AFLplusplusSetting::AFLplusplusSetting(const std::vector<std::string> &argv,
+                                       const std::string &in_dir,
+                                       const std::string &out_dir,
+                                       u32 exec_timelimit_ms, u64 exec_memlimit,
+                                       bool forksrv, bool dumb_mode,
+                                       int cpuid_to_bind,
+                                       const aflfast::option::Schedule schedule,
+                                       const std::string &schedule_string)
     : AFLSetting(argv, in_dir, out_dir, exec_timelimit_ms, exec_memlimit,
                  forksrv, dumb_mode, cpuid_to_bind),
       schedule(schedule),

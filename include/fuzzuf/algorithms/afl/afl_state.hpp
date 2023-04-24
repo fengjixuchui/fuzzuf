@@ -1,6 +1,6 @@
 /*
  * fuzzuf
- * Copyright (C) 2021 Ricerca Security
+ * Copyright (C) 2021-2023 Ricerca Security
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -32,7 +32,7 @@
 #include "fuzzuf/executor/afl_executor_interface.hpp"
 #include "fuzzuf/feedback/exit_status_feedback.hpp"
 #include "fuzzuf/feedback/inplace_memory_feedback.hpp"
-#include "fuzzuf/optimizer/optimizer.hpp"
+#include "fuzzuf/optimizer/havoc_optimizer.hpp"
 #include "fuzzuf/utils/common.hpp"
 #include "fuzzuf/utils/filesystem.hpp"
 
@@ -61,7 +61,7 @@ struct AFLStateTemplate {
   explicit AFLStateTemplate(
       std::shared_ptr<const AFLSetting> setting,
       std::shared_ptr<executor::AFLExecutorInterface> executor,
-      std::shared_ptr<optimizer::Optimizer<u32>> mutop_optimizer);
+      std::unique_ptr<optimizer::HavocOptimizer> &&havoc_optimizer);
   virtual ~AFLStateTemplate();
 
   AFLStateTemplate(const AFLStateTemplate &) = delete;
@@ -103,7 +103,7 @@ struct AFLStateTemplate {
   void SaveAuto(void);
   void WriteBitmap(void);
   void ReadBitmap(fs::path fname);
-  void MaybeUpdatePlotFile(double bitmap_cvg, double eps);
+  void MaybeUpdatePlotFile(double bitmap_cvg, double eps, u64 edges_found);
   void SaveCmdline(const std::vector<std::string> &argv);
   void FixUpBanner(const std::string &name);
   void CheckIfTty(void);
@@ -315,7 +315,7 @@ struct AFLStateTemplate {
   /* Automatically selected extras    */
   std::vector<AFLDictData> a_extras;
 
-  std::shared_ptr<optimizer::Optimizer<u32>> mutop_optimizer;
+  std::shared_ptr<optimizer::HavocOptimizer> havoc_optimizer;
 
   bool sync_external_queue = false; /* Enable parallel mode */
   std::uint32_t sync_interval_cnt = 0u;

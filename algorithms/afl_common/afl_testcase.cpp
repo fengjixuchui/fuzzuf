@@ -1,6 +1,6 @@
 /*
  * fuzzuf
- * Copyright (C) 2021 Ricerca Security
+ * Copyright (C) 2021-2023 Ricerca Security
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -26,7 +26,7 @@ AFLTestcase::AFLTestcase(std::shared_ptr<exec_input::OnDiskExecInput> input)
 
 AFLTestcase::~AFLTestcase() {}
 
-bool AFLTestcase::WasFuzzed(void) { return fuzz_level > 0; }
+bool AFLTestcase::WasFuzzed(void) const { return fuzz_level > 0; }
 
 void AFLTestcase::MarkFuzzed(void) { fuzz_level = 1; }
 

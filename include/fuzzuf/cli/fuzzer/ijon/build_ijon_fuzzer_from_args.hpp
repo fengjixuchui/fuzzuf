@@ -1,6 +1,6 @@
 /*
  * fuzzuf
- * Copyright (C) 2021 Ricerca Security
+ * Copyright (C) 2021-2023 Ricerca Security
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,6 +22,7 @@
 #include <boost/program_options.hpp>
 #include <memory>
 
+#include "fuzzuf/algorithms/afl/afl_havoc_optimizer.hpp"
 #include "fuzzuf/algorithms/afl/afl_option.hpp"
 #include "fuzzuf/algorithms/ijon/ijon_havoc.hpp"
 #include "fuzzuf/algorithms/ijon/ijon_option.hpp"
@@ -33,6 +34,7 @@
 #include "fuzzuf/exceptions.hpp"
 #include "fuzzuf/executor/linux_fork_server_executor.hpp"
 #include "fuzzuf/executor/native_linux_executor.hpp"
+#include "fuzzuf/optimizer/havoc_optimizer.hpp"
 #include "fuzzuf/optimizer/optimizer.hpp"
 #include "fuzzuf/utils/common.hpp"
 #include "fuzzuf/utils/optparser.hpp"
@@ -136,7 +138,7 @@ std::unique_ptr<TFuzzer> BuildIJONFuzzerFromArgs(
       global_options.exec_memlimit.value_or(GetMemLimit<IJONTag>()),
       ijon_options.forksrv,
       /* dumb_mode */ false,  // FIXME: add dumb_mode
-      fuzzuf::utils::CPUID_BIND_WHICHEVER);
+      global_options.cpuid_to_bind);
 
   // NativeLinuxExecutor needs the directory specified by "out_dir" to be
   // already set up so we need to create the directory first, and then
@@ -177,13 +179,20 @@ std::unique_ptr<TFuzzer> BuildIJONFuzzerFromArgs(
       EXIT("Unsupported executor: '%s'", global_options.executor.c_str());
   }
 
-  auto mutop_optimizer = std::unique_ptr<optimizer::Optimizer<u32>>(
-      new algorithm::ijon::havoc::IJONHavocCaseDistrib());
+  using algorithm::afl::AFLHavocOptimizer;
+  using algorithm::afl::option::GetHavocStackPow2;
+  using algorithm::ijon::havoc::IJONHavocCaseDistrib;
+
+  auto mutop_optimizer =
+      std::unique_ptr<optimizer::Optimizer<u32>>(new IJONHavocCaseDistrib());
+  std::unique_ptr<optimizer::HavocOptimizer> havoc_optimizer(
+      new AFLHavocOptimizer(std::move(mutop_optimizer),
+                            GetHavocStackPow2<IJONTag>()));
 
   // Create IJONState
   using fuzzuf::algorithm::ijon::IJONState;
   auto state = std::make_unique<IJONState>(setting, executor,
-                                           std::move(mutop_optimizer));
+                                           std::move(havoc_optimizer));
 
   // Load dictionary
   for (const auto &d : ijon_options.dict_file) {

@@ -1,6 +1,6 @@
 /*
  * fuzzuf
- * Copyright (C) 2021 Ricerca Security
+ * Copyright (C) 2021-2023 Ricerca Security
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,7 +31,7 @@ struct AFLTestcase {
   explicit AFLTestcase(std::shared_ptr<exec_input::OnDiskExecInput> input);
   virtual ~AFLTestcase();
 
-  bool WasFuzzed(void);
+  bool WasFuzzed(void) const;
   void MarkFuzzed(void);
 
   std::shared_ptr<exec_input::OnDiskExecInput> input;
